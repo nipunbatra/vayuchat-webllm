@@ -1,0 +1,1020 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VayuChat - Natural Language Data Analysis</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #0f0f0f;
+      color: #e0e0e0;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    header {
+      padding: 12px 20px;
+      background: #1a1a1a;
+      border-bottom: 1px solid #333;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    header h1 {
+      font-size: 18px;
+      font-weight: 600;
+    }
+
+    .status {
+      font-size: 12px;
+      padding: 4px 10px;
+      border-radius: 12px;
+      background: #333;
+    }
+
+    .status.ready { background: #1a472a; color: #4ade80; }
+    .status.loading { background: #422006; color: #fb923c; }
+    .status.error { background: #450a0a; color: #f87171; }
+
+    .model-select {
+      background: #252525;
+      border: 1px solid #444;
+      border-radius: 6px;
+      padding: 6px 10px;
+      color: #e0e0e0;
+      font-size: 12px;
+      cursor: pointer;
+      margin-left: auto;
+    }
+
+    .model-select:focus { outline: none; border-color: #2563eb; }
+    .model-select:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    .main-container {
+      display: flex;
+      flex: 1;
+      overflow: hidden;
+    }
+
+    .sidebar {
+      width: 280px;
+      background: #1a1a1a;
+      border-right: 1px solid #333;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .sidebar h2 {
+      font-size: 14px;
+      font-weight: 600;
+      color: #888;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .file-upload {
+      border: 2px dashed #444;
+      border-radius: 8px;
+      padding: 20px;
+      text-align: center;
+      cursor: pointer;
+      transition: border-color 0.2s;
+    }
+
+    .file-upload:hover { border-color: #666; }
+    .file-upload.dragover { border-color: #4ade80; background: #1a472a22; }
+
+    .file-upload input { display: none; }
+
+    .file-list {
+      flex: 1;
+      overflow-y: auto;
+    }
+
+    .file-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px;
+      background: #252525;
+      border-radius: 6px;
+      margin-bottom: 8px;
+      font-size: 13px;
+    }
+
+    .file-item .size {
+      color: #666;
+      margin-left: auto;
+      font-size: 11px;
+    }
+
+    .file-item .remove {
+      color: #666;
+      cursor: pointer;
+      padding: 2px 6px;
+    }
+
+    .file-item .remove:hover { color: #f87171; }
+
+    .chat-container {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 20px;
+    }
+
+    .message {
+      max-width: 85%;
+      margin-bottom: 16px;
+    }
+
+    .message.user {
+      margin-left: auto;
+    }
+
+    .message-content {
+      padding: 12px 16px;
+      border-radius: 12px;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    .message.user .message-content {
+      background: #2563eb;
+      color: white;
+    }
+
+    .message.assistant .message-content {
+      background: #252525;
+    }
+
+    .code-block {
+      background: #1a1a1a;
+      border: 1px solid #333;
+      border-radius: 8px;
+      margin: 8px 0;
+      overflow: hidden;
+    }
+
+    .code-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 12px;
+      background: #252525;
+      font-size: 12px;
+      color: #888;
+    }
+
+    .code-header button {
+      background: #333;
+      border: none;
+      color: #e0e0e0;
+      padding: 4px 10px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 11px;
+    }
+
+    .code-header button:hover { background: #444; }
+
+    .code-block pre {
+      padding: 12px;
+      overflow-x: auto;
+      font-family: 'SF Mono', 'Fira Code', monospace;
+      font-size: 13px;
+      line-height: 1.4;
+    }
+
+    .output-block {
+      background: #0d1117;
+      border: 1px solid #333;
+      border-radius: 8px;
+      padding: 12px;
+      margin: 8px 0;
+      font-family: 'SF Mono', monospace;
+      font-size: 13px;
+      white-space: pre-wrap;
+      overflow-x: auto;
+    }
+
+    .output-block img {
+      max-width: 100%;
+      border-radius: 4px;
+      margin-top: 8px;
+    }
+
+    .output-block.error {
+      border-color: #7f1d1d;
+      color: #f87171;
+    }
+
+    .input-area {
+      padding: 16px 20px;
+      background: #1a1a1a;
+      border-top: 1px solid #333;
+    }
+
+    .input-wrapper {
+      display: flex;
+      gap: 12px;
+      align-items: flex-end;
+    }
+
+    .input-wrapper textarea {
+      flex: 1;
+      background: #252525;
+      border: 1px solid #333;
+      border-radius: 8px;
+      padding: 12px;
+      color: #e0e0e0;
+      font-size: 14px;
+      font-family: inherit;
+      resize: none;
+      min-height: 48px;
+      max-height: 200px;
+    }
+
+    .input-wrapper textarea:focus {
+      outline: none;
+      border-color: #2563eb;
+    }
+
+    .input-wrapper button {
+      background: #2563eb;
+      border: none;
+      border-radius: 8px;
+      padding: 12px 20px;
+      color: white;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .input-wrapper button:hover { background: #1d4ed8; }
+    .input-wrapper button:disabled { background: #333; cursor: not-allowed; }
+
+    .loading-spinner {
+      display: inline-block;
+      width: 16px;
+      height: 16px;
+      border: 2px solid #333;
+      border-top-color: #4ade80;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .init-progress {
+      padding: 20px;
+      text-align: center;
+    }
+
+    .progress-bar {
+      height: 4px;
+      background: #333;
+      border-radius: 2px;
+      margin: 12px 0;
+      overflow: hidden;
+    }
+
+    .progress-bar-fill {
+      height: 100%;
+      background: #4ade80;
+      transition: width 0.3s;
+    }
+
+    .progress-text {
+      font-size: 12px;
+      color: #888;
+    }
+
+    .sample-queries {
+      padding: 8px 20px;
+      background: #151515;
+      border-top: 1px solid #252525;
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .sample-queries span {
+      font-size: 11px;
+      color: #666;
+      margin-right: 4px;
+    }
+
+    .sample-query {
+      background: #252525;
+      border: 1px solid #333;
+      border-radius: 16px;
+      padding: 6px 12px;
+      font-size: 12px;
+      color: #aaa;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .sample-query:hover {
+      background: #333;
+      color: #e0e0e0;
+      border-color: #444;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>VayuChat</h1>
+    <select id="model-select" class="model-select">
+      <option value="Qwen2.5-Coder-1.5B-Instruct-q4f16_1-MLC" selected>Qwen2.5-Coder-1.5B (Recommended)</option>
+      <option value="Qwen2.5-Coder-7B-Instruct-q4f16_1-MLC">Qwen2.5-Coder-7B (Better, Slower)</option>
+      <option value="Llama-3.2-3B-Instruct-q4f16_1-MLC">Llama-3.2-3B</option>
+      <option value="Phi-3.5-mini-instruct-q4f16_1-MLC">Phi-3.5-mini (3.8B)</option>
+    </select>
+    <span id="pyodide-status" class="status loading">Pyodide: Loading...</span>
+    <span id="llm-status" class="status loading">LLM: Loading...</span>
+  </header>
+
+  <div class="main-container">
+    <aside class="sidebar">
+      <h2>Data Files</h2>
+      <div class="file-upload" id="file-upload">
+        <input type="file" id="file-input" accept=".csv" multiple>
+        <p>Drop CSV files here or click to upload</p>
+      </div>
+      <div class="file-list" id="file-list"></div>
+
+      <h2>Loaded DataFrames</h2>
+      <div id="dataframes-list" style="font-size: 13px; color: #888;">
+        No data loaded yet
+      </div>
+    </aside>
+
+    <main class="chat-container">
+      <div class="messages" id="messages">
+        <div class="init-progress" id="init-progress">
+          <h3>Initializing VayuChat</h3>
+          <div class="progress-bar">
+            <div class="progress-bar-fill" id="progress-fill" style="width: 0%"></div>
+          </div>
+          <p class="progress-text" id="progress-text">Loading Pyodide runtime...</p>
+        </div>
+      </div>
+
+      <div class="sample-queries" id="sample-queries">
+        <span>Try:</span>
+        <button class="sample-query" data-query="Show average PM2.5 by city, sorted worst to best">Avg PM2.5 by city</button>
+        <button class="sample-query" data-query="Plot daily average PM2.5 trend for Delhi over the month">Delhi monthly trend</button>
+        <button class="sample-query" data-query="Which city has the best air quality on average?">Best air quality</button>
+        <button class="sample-query" data-query="Show a heatmap of average PM2.5 by hour and day of week">Hourly heatmap</button>
+        <button class="sample-query" data-query="Compare PM2.5 boxplots across all cities">City boxplots</button>
+        <button class="sample-query" data-query="Show top 10 most polluted readings">Top 10 worst</button>
+        <button class="sample-query" data-query="Plot scatter of temperature vs PM2.5 colored by city">Temp vs PM2.5</button>
+        <button class="sample-query" data-query="What percentage of readings are in each AQI category?">AQI breakdown</button>
+        <button class="sample-query" data-query="Plot average PM2.5 by hour of day for weekday vs weekend">Weekday vs weekend</button>
+        <button class="sample-query" data-query="Show correlation matrix of all pollutants">Correlation matrix</button>
+      </div>
+
+      <div class="input-area">
+        <div class="input-wrapper">
+          <textarea
+            id="user-input"
+            placeholder="Ask a question about your data..."
+            rows="1"
+            disabled
+          ></textarea>
+          <button id="send-btn" disabled>Send</button>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script type="module">
+    // State
+    const state = {
+      pyodide: null,
+      llmEngine: null,
+      csvFiles: new Map(), // filename -> content
+      isProcessing: false,
+      isReady: false
+    };
+
+    // DOM Elements
+    const elements = {
+      pyodideStatus: document.getElementById('pyodide-status'),
+      llmStatus: document.getElementById('llm-status'),
+      modelSelect: document.getElementById('model-select'),
+      fileUpload: document.getElementById('file-upload'),
+      fileInput: document.getElementById('file-input'),
+      fileList: document.getElementById('file-list'),
+      dataframesList: document.getElementById('dataframes-list'),
+      messages: document.getElementById('messages'),
+      initProgress: document.getElementById('init-progress'),
+      progressFill: document.getElementById('progress-fill'),
+      progressText: document.getElementById('progress-text'),
+      userInput: document.getElementById('user-input'),
+      sendBtn: document.getElementById('send-btn')
+    };
+
+    // Initialize Pyodide
+    async function initPyodide() {
+      updateProgress(10, 'Loading Pyodide runtime...');
+
+      const pyodide = await loadPyodide({
+        indexURL: './pyodide/'
+      });
+
+      updateProgress(30, 'Installing pandas...');
+      await pyodide.loadPackage('pandas');
+
+      updateProgress(50, 'Installing matplotlib...');
+      await pyodide.loadPackage('matplotlib');
+
+      // Setup matplotlib for inline display with dark theme
+      await pyodide.runPythonAsync(`
+import matplotlib
+matplotlib.use('AGG')
+import matplotlib.pyplot as plt
+import pandas as pd
+import io
+import base64
+
+# Dark theme for matplotlib
+plt.style.use('dark_background')
+plt.rcParams.update({
+    'figure.facecolor': '#1a1a1a',
+    'axes.facecolor': '#1a1a1a',
+    'axes.edgecolor': '#444444',
+    'axes.labelcolor': '#e0e0e0',
+    'text.color': '#e0e0e0',
+    'xtick.color': '#e0e0e0',
+    'ytick.color': '#e0e0e0',
+    'grid.color': '#333333',
+    'legend.facecolor': '#252525',
+    'legend.edgecolor': '#444444',
+})
+
+def get_plot_as_base64():
+    buf = io.BytesIO()
+    plt.savefig(buf, format='png', dpi=120, bbox_inches='tight',
+                facecolor='#1a1a1a', edgecolor='none')
+    buf.seek(0)
+    img_base64 = base64.b64encode(buf.read()).decode('utf-8')
+    plt.close()
+    return img_base64
+
+# Store for dataframes
+_dataframes = {}
+      `);
+
+      elements.pyodideStatus.textContent = 'Pyodide: Ready';
+      elements.pyodideStatus.className = 'status ready';
+
+      return pyodide;
+    }
+
+    // Store WebLLM module
+    let CreateMLCEngine = null;
+
+    // Initialize WebLLM
+    async function initLLM(modelId = null) {
+      const selectedModel = modelId || elements.modelSelect.value;
+
+      updateProgress(60, 'Loading WebLLM...');
+
+      if (!CreateMLCEngine) {
+        const webllm = await import('https://esm.run/@mlc-ai/web-llm');
+        CreateMLCEngine = webllm.CreateMLCEngine;
+      }
+
+      updateProgress(70, 'Downloading model (first load may take a few minutes)...');
+
+      elements.llmStatus.textContent = 'LLM: Loading...';
+      elements.llmStatus.className = 'status loading';
+      elements.modelSelect.disabled = true;
+
+      const engine = await CreateMLCEngine(selectedModel, {
+        initProgressCallback: (progress) => {
+          const pct = 70 + (progress.progress * 25);
+          updateProgress(pct, progress.text || 'Loading model...');
+        }
+      });
+
+      elements.llmStatus.textContent = 'LLM: Ready';
+      elements.llmStatus.className = 'status ready';
+      elements.modelSelect.disabled = false;
+
+      return engine;
+    }
+
+    // Switch model
+    async function switchModel() {
+      if (state.isProcessing) return;
+
+      state.isProcessing = true;
+      elements.userInput.disabled = true;
+      elements.sendBtn.disabled = true;
+
+      const newModel = elements.modelSelect.value;
+      const modelName = elements.modelSelect.options[elements.modelSelect.selectedIndex].text;
+
+      const loadingMsg = addMessage('assistant', `<div class="loading-spinner"></div> Loading ${modelName}... This may take a minute.`);
+
+      try {
+        state.llmEngine = await initLLM(newModel);
+        loadingMsg.remove();
+        addMessage('assistant', `Switched to ${modelName}. Ready for queries.`);
+      } catch (error) {
+        loadingMsg.remove();
+        addMessage('assistant', `Error loading model: ${error.message}`);
+        elements.llmStatus.textContent = 'LLM: Error';
+        elements.llmStatus.className = 'status error';
+      }
+
+      state.isProcessing = false;
+      elements.userInput.disabled = false;
+      elements.sendBtn.disabled = false;
+    }
+
+    function updateProgress(pct, text) {
+      elements.progressFill.style.width = `${pct}%`;
+      elements.progressText.textContent = text;
+    }
+
+    // File handling
+    function setupFileHandling() {
+      elements.fileUpload.addEventListener('click', () => elements.fileInput.click());
+      elements.fileInput.addEventListener('change', handleFiles);
+
+      elements.fileUpload.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        elements.fileUpload.classList.add('dragover');
+      });
+
+      elements.fileUpload.addEventListener('dragleave', () => {
+        elements.fileUpload.classList.remove('dragover');
+      });
+
+      elements.fileUpload.addEventListener('drop', (e) => {
+        e.preventDefault();
+        elements.fileUpload.classList.remove('dragover');
+        handleFiles({ target: { files: e.dataTransfer.files } });
+      });
+    }
+
+    async function handleFiles(event) {
+      const files = Array.from(event.target.files);
+
+      for (const file of files) {
+        if (!file.name.endsWith('.csv')) continue;
+
+        const content = await file.text();
+        state.csvFiles.set(file.name, content);
+
+        // Load into Pyodide
+        const varName = file.name.replace('.csv', '').replace(/[^a-zA-Z0-9_]/g, '_');
+        state.pyodide.FS.writeFile(`/home/pyodide/${file.name}`, content);
+
+        await state.pyodide.runPythonAsync(`
+_dataframes['${varName}'] = pd.read_csv('/home/pyodide/${file.name}')
+${varName} = _dataframes['${varName}']
+print(f"Loaded ${varName}: {${varName}.shape[0]} rows, {${varName}.shape[1]} columns")
+        `);
+
+        updateFileList();
+        updateDataframesList();
+      }
+    }
+
+    function updateFileList() {
+      elements.fileList.innerHTML = '';
+      for (const [name, content] of state.csvFiles) {
+        const size = (content.length / 1024).toFixed(1);
+        const div = document.createElement('div');
+        div.className = 'file-item';
+        div.innerHTML = `
+          <span>${name}</span>
+          <span class="size">${size} KB</span>
+          <span class="remove" data-name="${name}">&times;</span>
+        `;
+        elements.fileList.appendChild(div);
+      }
+
+      // Remove handlers
+      document.querySelectorAll('.file-item .remove').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const name = btn.dataset.name;
+          state.csvFiles.delete(name);
+          updateFileList();
+        });
+      });
+    }
+
+    async function updateDataframesList() {
+      const result = await state.pyodide.runPythonAsync(`
+import json
+info = {}
+for name, df in _dataframes.items():
+    info[name] = {'rows': len(df), 'cols': len(df.columns), 'columns': list(df.columns)[:5]}
+json.dumps(info)
+      `);
+
+      const info = JSON.parse(result);
+      if (Object.keys(info).length === 0) {
+        elements.dataframesList.innerHTML = 'No data loaded yet';
+        return;
+      }
+
+      elements.dataframesList.innerHTML = Object.entries(info).map(([name, data]) => `
+        <div style="margin-bottom: 8px; padding: 8px; background: #252525; border-radius: 6px;">
+          <strong>${name}</strong><br>
+          <span style="color: #666;">${data.rows} rows, ${data.cols} cols</span><br>
+          <span style="color: #4ade80; font-size: 11px;">${data.columns.join(', ')}${data.cols > 5 ? '...' : ''}</span>
+        </div>
+      `).join('');
+    }
+
+    // Chat functionality
+    function addMessage(role, content) {
+      const div = document.createElement('div');
+      div.className = `message ${role}`;
+      div.innerHTML = `<div class="message-content">${content}</div>`;
+      elements.messages.appendChild(div);
+      elements.messages.scrollTop = elements.messages.scrollHeight;
+      return div;
+    }
+
+    function addCodeBlock(code, output = null, error = false) {
+      const div = document.createElement('div');
+      div.className = 'message assistant';
+
+      let html = `
+        <div class="code-block">
+          <div class="code-header">
+            <span>Python</span>
+            <button onclick="navigator.clipboard.writeText(this.closest('.code-block').querySelector('pre').textContent)">Copy</button>
+          </div>
+          <pre>${escapeHtml(code)}</pre>
+        </div>
+      `;
+
+      if (output !== null) {
+        if (error) {
+          html += `<div class="output-block error">${escapeHtml(output)}</div>`;
+        } else {
+          html += `<div class="output-block">${output}</div>`;
+        }
+      }
+
+      div.innerHTML = `<div class="message-content">${html}</div>`;
+      elements.messages.appendChild(div);
+      elements.messages.scrollTop = elements.messages.scrollHeight;
+    }
+
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    async function generateCode(query) {
+      // Get dataframe info for context
+      const dfInfo = await state.pyodide.runPythonAsync(`
+import json
+info = {}
+for name, df in _dataframes.items():
+    info[name] = {
+        'columns': list(df.columns),
+        'dtypes': {col: str(dtype) for col, dtype in df.dtypes.items()},
+        'shape': df.shape,
+        'head': df.head(3).to_string()
+    }
+json.dumps(info)
+      `);
+
+      const dataframes = JSON.parse(dfInfo);
+      const dfContext = Object.entries(dataframes).map(([name, info]) =>
+        `DataFrame '${name}' (${info.shape[0]} rows, ${info.shape[1]} cols):
+Columns: ${info.columns.join(', ')}
+Sample:
+${info.head}`
+      ).join('\n\n');
+
+      const columns = Object.values(dataframes)[0]?.columns?.join(', ') || 'timestamp, date, hour, day_of_week, station, city, PM2.5, PM10, NO2, SO2, CO, O3, temperature, humidity, wind_speed, wind_direction, AQI_category';
+
+      const fewShotExamples = [
+        // Text/table output
+        { q: 'average PM2.5 by city', a: `print(air_quality.groupby('city')['PM2.5'].mean().sort_values(ascending=False).round(1))` },
+        { q: 'top 5 most polluted readings', a: `print(air_quality.nlargest(5, 'PM2.5')[['timestamp', 'city', 'station', 'PM2.5', 'AQI_category']])` },
+        { q: 'percentage by AQI category', a: `pct = air_quality['AQI_category'].value_counts(normalize=True) * 100\nprint(pct.round(1))` },
+        // Line plot
+        { q: 'plot daily PM2.5 trend for Delhi', a: `delhi = air_quality[air_quality['city'] == 'Delhi'].groupby('date')['PM2.5'].mean()
+plt.figure(figsize=(12, 4))
+plt.plot(delhi.index, delhi.values, marker='o', markersize=3)
+plt.title('Daily Average PM2.5 in Delhi')
+plt.xlabel('Date')
+plt.ylabel('PM2.5')
+plt.xticks(rotation=45)
+plt.tight_layout()
+plt.show()` },
+        // Boxplot
+        { q: 'boxplot of PM2.5 by city', a: `cities = air_quality['city'].unique()
+data = [air_quality[air_quality['city'] == c]['PM2.5'].values for c in cities]
+plt.figure(figsize=(12, 5))
+plt.boxplot(data, labels=cities)
+plt.ylabel('PM2.5 (μg/m³)')
+plt.title('PM2.5 Distribution by City')
+plt.xticks(rotation=45)
+plt.tight_layout()
+plt.show()` },
+        // Bar chart
+        { q: 'bar chart of average pollutants by city', a: `avg = air_quality.groupby('city')[['PM2.5', 'PM10', 'NO2']].mean()
+avg.plot(kind='bar', figsize=(12, 5))
+plt.title('Average Pollutant Levels by City')
+plt.ylabel('Concentration')
+plt.xticks(rotation=45)
+plt.legend(loc='upper right')
+plt.tight_layout()
+plt.show()` },
+        // Heatmap
+        { q: 'heatmap of PM2.5 by hour and day', a: `pivot = air_quality.pivot_table(values='PM2.5', index='hour', columns='day_of_week', aggfunc='mean')
+days_order = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
+pivot = pivot[[d for d in days_order if d in pivot.columns]]
+plt.figure(figsize=(10, 8))
+plt.imshow(pivot.values, aspect='auto', cmap='YlOrRd')
+plt.colorbar(label='PM2.5')
+plt.yticks(range(24), range(24))
+plt.xticks(range(len(pivot.columns)), pivot.columns, rotation=45)
+plt.xlabel('Day of Week')
+plt.ylabel('Hour')
+plt.title('Average PM2.5 by Hour and Day of Week')
+plt.tight_layout()
+plt.show()` },
+        // Scatter
+        { q: 'scatter plot temperature vs PM2.5', a: `plt.figure(figsize=(10, 6))
+colors = {'Delhi': 'red', 'Mumbai': 'blue', 'Bangalore': 'green', 'Chennai': 'orange', 'Kolkata': 'purple', 'Hyderabad': 'brown', 'Ahmedabad': 'pink', 'Pune': 'gray'}
+for city in air_quality['city'].unique():
+    subset = air_quality[air_quality['city'] == city].sample(min(100, len(air_quality[air_quality['city'] == city])))
+    plt.scatter(subset['temperature'], subset['PM2.5'], alpha=0.5, label=city, s=15, c=colors.get(city, 'blue'))
+plt.xlabel('Temperature (C)')
+plt.ylabel('PM2.5')
+plt.title('Temperature vs PM2.5 by City')
+plt.legend(bbox_to_anchor=(1.02, 1), loc='upper left')
+plt.tight_layout()
+plt.show()` },
+        // Correlation
+        { q: 'correlation matrix', a: `corr = air_quality[['PM2.5', 'PM10', 'NO2', 'SO2', 'CO', 'O3', 'temperature', 'humidity']].corr()
+plt.figure(figsize=(8, 6))
+plt.imshow(corr, cmap='coolwarm', vmin=-1, vmax=1)
+plt.colorbar()
+plt.xticks(range(len(corr)), corr.columns, rotation=45, ha='right')
+plt.yticks(range(len(corr)), corr.columns)
+for i in range(len(corr)):
+    for j in range(len(corr)):
+        plt.text(j, i, f'{corr.iloc[i, j]:.2f}', ha='center', va='center', fontsize=8)
+plt.title('Correlation Matrix')
+plt.tight_layout()
+plt.show()` },
+      ];
+
+      const messages = [];
+      for (const ex of fewShotExamples) {
+        messages.push({ role: 'user', content: `DataFrame 'air_quality' columns: ${columns}\nCode for: ${ex.q}` });
+        messages.push({ role: 'assistant', content: ex.a });
+      }
+      messages.push({ role: 'user', content: `DataFrame 'air_quality' columns: ${columns}\nCode for: ${query}` });
+
+      const response = await state.llmEngine.chat.completions.create({
+        messages,
+        temperature: 0,
+        max_tokens: 400
+      });
+
+      let code = response.choices[0].message.content;
+
+      // Clean up code blocks if present
+      code = code.replace(/```python\n?/g, '').replace(/```\n?/g, '').trim();
+
+      // Extract only Python code lines (remove explanatory text)
+      const lines = code.split('\n');
+      const codeLines = lines.filter(line => {
+        const trimmed = line.trim();
+        // Skip empty lines at start, keep them in middle
+        if (!trimmed) return true;
+        // Skip lines that look like English sentences (start with capital, contain spaces, end with punctuation)
+        if (/^[A-Z][^=]*[:.!?]$/.test(trimmed)) return false;
+        // Skip lines starting with common explanation words
+        if (/^(To |Here |This |The |You |I |Let |Now |First |Next |Note |Output|Result)/i.test(trimmed)) return false;
+        return true;
+      });
+
+      code = codeLines.join('\n').trim();
+
+      return code;
+    }
+
+    async function executeCode(code) {
+      try {
+        // Capture stdout
+        await state.pyodide.runPythonAsync(`
+import sys
+from io import StringIO
+_stdout_capture = StringIO()
+sys.stdout = _stdout_capture
+_captured_plot = None
+        `);
+
+        // Check if code has plotting
+        const hasPlot = code.includes('plt.') || code.includes('plot(');
+
+        // Replace plt.show() with our capture function to grab the plot before it's cleared
+        let modifiedCode = code;
+        if (hasPlot) {
+          // Remove all plt.show() calls and add capture at the end
+          modifiedCode = code.replace(/plt\.show\(\)\s*/g, '');
+          modifiedCode += '\n_captured_plot = get_plot_as_base64() if plt.get_fignums() else None';
+        }
+
+        // Execute the code
+        await state.pyodide.runPythonAsync(modifiedCode);
+
+        // Get stdout
+        const stdout = await state.pyodide.runPythonAsync(`
+sys.stdout = sys.__stdout__
+_stdout_capture.getvalue()
+        `);
+
+        // Get captured plot
+        let plotHtml = '';
+        if (hasPlot) {
+          try {
+            const imgBase64 = await state.pyodide.runPythonAsync(`_captured_plot if _captured_plot else ''`);
+            if (imgBase64 && imgBase64.length > 0) {
+              plotHtml = `<img src="data:image/png;base64,${imgBase64}" alt="Plot">`;
+            }
+          } catch (e) {
+            console.log('Plot capture error:', e);
+          }
+        }
+
+        return {
+          success: true,
+          output: escapeHtml(stdout) + plotHtml
+        };
+      } catch (error) {
+        // Reset stdout on error
+        await state.pyodide.runPythonAsync(`sys.stdout = sys.__stdout__`);
+        return { success: false, output: error.message };
+      }
+    }
+
+    async function handleSubmit() {
+      const query = elements.userInput.value.trim();
+      if (!query || state.isProcessing) return;
+
+      state.isProcessing = true;
+      elements.sendBtn.disabled = true;
+      elements.userInput.value = '';
+
+      addMessage('user', escapeHtml(query));
+
+      const thinkingMsg = addMessage('assistant', '<div class="loading-spinner"></div> Generating code...');
+
+      try {
+        const code = await generateCode(query);
+        thinkingMsg.remove();
+
+        addMessage('assistant', 'Here\'s the code to answer your question:');
+
+        const result = await executeCode(code);
+        addCodeBlock(code, result.output, !result.success);
+
+      } catch (error) {
+        thinkingMsg.remove();
+        addMessage('assistant', `Error: ${error.message}`);
+      }
+
+      state.isProcessing = false;
+      elements.sendBtn.disabled = false;
+    }
+
+    // Setup input handlers
+    function setupInputHandlers() {
+      elements.sendBtn.addEventListener('click', handleSubmit);
+
+      elements.userInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+          e.preventDefault();
+          handleSubmit();
+        }
+      });
+
+      // Auto-resize textarea
+      elements.userInput.addEventListener('input', () => {
+        elements.userInput.style.height = 'auto';
+        elements.userInput.style.height = elements.userInput.scrollHeight + 'px';
+      });
+
+      // Sample query buttons
+      document.querySelectorAll('.sample-query').forEach(btn => {
+        btn.addEventListener('click', () => {
+          if (!state.isReady || state.isProcessing) return;
+          elements.userInput.value = btn.dataset.query;
+          handleSubmit();
+        });
+      });
+
+      // Model selector
+      elements.modelSelect.addEventListener('change', switchModel);
+    }
+
+    // Load sample CSV
+    async function loadSampleData() {
+      try {
+        const response = await fetch('sample_air_quality.csv');
+        if (!response.ok) return;
+
+        const content = await response.text();
+        state.csvFiles.set('sample_air_quality.csv', content);
+
+        const varName = 'air_quality';
+        state.pyodide.FS.writeFile('/home/pyodide/sample_air_quality.csv', content);
+
+        await state.pyodide.runPythonAsync(`
+_dataframes['${varName}'] = pd.read_csv('/home/pyodide/sample_air_quality.csv')
+${varName} = _dataframes['${varName}']
+# Parse timestamp
+${varName}['timestamp'] = pd.to_datetime(${varName}['timestamp'])
+${varName}['hour'] = ${varName}['timestamp'].dt.hour
+print(f"Loaded ${varName}: {${varName}.shape[0]} rows, {${varName}.shape[1]} columns")
+        `);
+
+        updateFileList();
+        await updateDataframesList();
+      } catch (e) {
+        console.log('No sample data to load');
+      }
+    }
+
+    // Initialize app
+    async function init() {
+      setupFileHandling();
+      setupInputHandlers();
+
+      try {
+        state.pyodide = await initPyodide();
+
+        // Load sample data while LLM downloads
+        await loadSampleData();
+
+        state.llmEngine = await initLLM();
+
+        updateProgress(100, 'Ready!');
+
+        setTimeout(() => {
+          elements.initProgress.remove();
+          addMessage('assistant', 'Welcome to VayuChat! Sample air quality data is loaded. Try the example queries below or ask your own questions.');
+          elements.userInput.disabled = false;
+          elements.sendBtn.disabled = false;
+          state.isReady = true;
+        }, 500);
+
+      } catch (error) {
+        updateProgress(0, `Error: ${error.message}`);
+        elements.pyodideStatus.className = 'status error';
+        elements.llmStatus.className = 'status error';
+        console.error('Initialization error:', error);
+      }
+    }
+
+    // Register service worker for offline support
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('./sw.js')
+        .then(reg => console.log('[App] Service Worker registered'))
+        .catch(err => console.log('[App] Service Worker registration failed:', err));
+    }
+
+    // Load Pyodide script and start
+    const script = document.createElement('script');
+    script.src = './pyodide/pyodide.js';
+    script.onload = init;
+    document.head.appendChild(script);
+  </script>
+</body>
+</html>

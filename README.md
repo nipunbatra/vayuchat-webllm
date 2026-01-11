@@ -83,6 +83,24 @@ Models are downloaded once and cached in browser storage.
 2. Data is loaded as a pandas DataFrame
 3. Ask questions about your data
 
+## Fully Offline Setup
+
+To run without any internet connection (even on first load):
+
+```bash
+# Download all dependencies (~1.2GB total)
+./setup_offline.sh
+
+# Use the offline version
+open http://localhost:8888/index_offline.html
+```
+
+This downloads:
+- Pyodide + Python packages (~150MB)
+- Qwen2.5-Coder-1.5B model (~900MB)
+
+After setup, works completely offline on Mac, iPad, or any device with a modern browser.
+
 ## License
 
 MIT
