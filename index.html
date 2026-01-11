@@ -509,11 +509,15 @@ _dataframes = {}
       elements.llmStatus.className = 'status loading';
       elements.modelSelect.disabled = true;
 
+      // Disable cache on GitHub Pages to avoid CORS issues
+      const isGitHubPages = window.location.hostname.includes('github.io');
+
       const engine = await CreateMLCEngine(selectedModel, {
         initProgressCallback: (progress) => {
           const pct = 70 + (progress.progress * 25);
           updateProgress(pct, progress.text || 'Loading model...');
-        }
+        },
+        appConfig: isGitHubPages ? { useIndexedDBCache: false } : undefined
       });
 
       elements.llmStatus.textContent = 'LLM: Ready';
