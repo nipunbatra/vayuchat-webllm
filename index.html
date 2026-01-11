@@ -512,17 +512,29 @@ _dataframes = {}
     async function switchModel() {
       if (state.isProcessing) return;
 
+      state.isProcessing = true;
+      elements.userInput.disabled = true;
+      elements.sendBtn.disabled = true;
+
       const newModel = elements.modelSelect.value;
-      addMessage('assistant', `Switching to ${elements.modelSelect.options[elements.modelSelect.selectedIndex].text}...`);
+      const modelName = elements.modelSelect.options[elements.modelSelect.selectedIndex].text;
+
+      const loadingMsg = addMessage('assistant', `<div class="loading-spinner"></div> Loading ${modelName}... This may take a minute.`);
 
       try {
         state.llmEngine = await initLLM(newModel);
-        addMessage('assistant', 'Model loaded successfully. Ready for queries.');
+        loadingMsg.remove();
+        addMessage('assistant', `Switched to ${modelName}. Ready for queries.`);
       } catch (error) {
+        loadingMsg.remove();
         addMessage('assistant', `Error loading model: ${error.message}`);
         elements.llmStatus.textContent = 'LLM: Error';
         elements.llmStatus.className = 'status error';
       }
+
+      state.isProcessing = false;
+      elements.userInput.disabled = false;
+      elements.sendBtn.disabled = false;
     }
 
     function updateProgress(pct, text) {
