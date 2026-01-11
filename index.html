@@ -786,16 +786,17 @@ plt.legend(bbox_to_anchor=(1.02, 1), loc='upper left')
 plt.tight_layout()
 plt.show()` },
         // Correlation
-        { q: 'correlation matrix', a: `corr = air_quality[['PM2.5', 'PM10', 'NO2', 'SO2', 'CO', 'O3', 'temperature', 'humidity']].corr()
-plt.figure(figsize=(8, 6))
+        { q: 'correlation matrix', a: `numeric_cols = ['PM2.5', 'PM10', 'NO2', 'SO2', 'CO', 'O3', 'temperature', 'humidity', 'wind_speed']
+corr = air_quality[numeric_cols].corr()
+plt.figure(figsize=(9, 7))
 plt.imshow(corr, cmap='coolwarm', vmin=-1, vmax=1)
-plt.colorbar()
+plt.colorbar(label='Correlation')
 plt.xticks(range(len(corr)), corr.columns, rotation=45, ha='right')
 plt.yticks(range(len(corr)), corr.columns)
 for i in range(len(corr)):
     for j in range(len(corr)):
-        plt.text(j, i, f'{corr.iloc[i, j]:.2f}', ha='center', va='center', fontsize=8)
-plt.title('Correlation Matrix')
+        plt.text(j, i, f'{corr.iloc[i, j]:.2f}', ha='center', va='center', fontsize=8, color='white' if abs(corr.iloc[i, j]) > 0.5 else 'black')
+plt.title('Correlation Matrix of Pollutants')
 plt.tight_layout()
 plt.show()` },
       ];
