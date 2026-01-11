@@ -509,15 +509,11 @@ _dataframes = {}
       elements.llmStatus.className = 'status loading';
       elements.modelSelect.disabled = true;
 
-      // Disable cache on GitHub Pages to avoid CORS issues
-      const isGitHubPages = window.location.hostname.includes('github.io');
-
       const engine = await CreateMLCEngine(selectedModel, {
         initProgressCallback: (progress) => {
           const pct = 70 + (progress.progress * 25);
           updateProgress(pct, progress.text || 'Loading model...');
-        },
-        appConfig: isGitHubPages ? { useIndexedDBCache: false } : undefined
+        }
       });
 
       elements.llmStatus.textContent = 'LLM: Ready';
@@ -1005,6 +1001,13 @@ print(f"Loaded ${varName}: {${varName}.shape[0]} rows, {${varName}.shape[1]} col
         elements.llmStatus.className = 'status error';
         console.error('Initialization error:', error);
       }
+    }
+
+    // Register service worker for offline support
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('./sw.js')
+        .then(reg => console.log('[App] Service Worker registered'))
+        .catch(err => console.log('[App] Service Worker registration failed:', err));
     }
 
     // Load Pyodide script and start
