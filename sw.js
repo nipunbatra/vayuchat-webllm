@@ -1,4 +1,4 @@
-const CACHE_NAME = 'vayuchat-v1';
+const CACHE_NAME = 'vayuchat-v2';
 const PYODIDE_VERSION = '0.26.4';
 
 // Assets to cache immediately
@@ -6,6 +6,10 @@ const STATIC_ASSETS = [
   './',
   './index.html',
   './sample_air_quality.csv',
+  './manifest.json',
+  './icon.svg',
+  './icon-192.png',
+  './icon-512.png',
 ];
 
 // Pyodide core files to cache

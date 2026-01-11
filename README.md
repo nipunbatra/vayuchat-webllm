@@ -83,6 +83,28 @@ Models are downloaded once and cached in browser storage.
 2. Data is loaded as a pandas DataFrame
 3. Ask questions about your data
 
+## Install as App (PWA)
+
+VayuChat can be installed as an app on any device:
+
+**iPhone/iPad:**
+1. Open https://nipunbatra.github.io/vayuchat-webllm/ in Safari
+2. Tap Share → "Add to Home Screen"
+3. App works offline after first use
+
+**Android:**
+1. Open in Chrome
+2. Tap menu → "Install app" or "Add to Home Screen"
+
+**Mac/Windows:**
+1. Open in Chrome/Edge
+2. Click install icon in address bar (or menu → "Install VayuChat")
+
+After installation, the app:
+- Launches like a native app (no browser chrome)
+- Works offline after first model download
+- Gets cached updates automatically
+
 ## Fully Offline Setup
 
 To run without any internet connection (even on first load):
