@@ -810,6 +810,7 @@ import sys
 from io import StringIO
 _stdout_capture = StringIO()
 sys.stdout = _stdout_capture
+_captured_plot = None
         `);
 
         // Check if code has plotting
@@ -818,7 +819,9 @@ sys.stdout = _stdout_capture
         // Replace plt.show() with our capture function to grab the plot before it's cleared
         let modifiedCode = code;
         if (hasPlot) {
-          modifiedCode = code.replace(/plt\.show\(\)/g, '_captured_plot = get_plot_as_base64()');
+          // Remove all plt.show() calls and add capture at the end
+          modifiedCode = code.replace(/plt\.show\(\)\s*/g, '');
+          modifiedCode += '\n_captured_plot = get_plot_as_base64() if plt.get_fignums() else None';
         }
 
         // Execute the code
@@ -834,17 +837,12 @@ _stdout_capture.getvalue()
         let plotHtml = '';
         if (hasPlot) {
           try {
-            const imgBase64 = await state.pyodide.runPythonAsync(`
-try:
-    _captured_plot
-except NameError:
-    ''
-            `);
-            if (imgBase64) {
+            const imgBase64 = await state.pyodide.runPythonAsync(`_captured_plot if _captured_plot else ''`);
+            if (imgBase64 && imgBase64.length > 0) {
               plotHtml = `<img src="data:image/png;base64,${imgBase64}" alt="Plot">`;
             }
           } catch (e) {
-            // No plot to capture
+            console.log('Plot capture error:', e);
           }
         }
 
